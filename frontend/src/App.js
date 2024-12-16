@@ -9,6 +9,7 @@ import StockAnalysis from './components/StockAnalysis';
 import TechnicalIndicators from './components/TechnicalIndicators';
 import RiskAnalysis from './components/RiskAnalysis';
 import AIAnalysis from './components/AIAnalysis';
+import StockInfo from './components/StockInfo';
 import './App.css';
 
 const { Header, Content } = Layout;
@@ -159,9 +160,26 @@ function App() {
           </Col>
         </Row>
 
-        {stockData && analysisData && (
+        {stockData && stockData.analysis && (
           <div className="analysis-section">
             <Row gutter={[16, 16]}>
+              <Col xs={24} lg={12}>
+                <Tabs 
+                  defaultActiveKey="1"
+                  items={[
+                    {
+                      key: '1',
+                      label: '公司信息',
+                      children: <StockInfo stockInfo={stockData.stock_info} />
+                    },
+                    {
+                      key: '2',
+                      label: '智能分析',
+                      children: <StockAnalysis analysis={stockData.analysis.smart_analysis} />
+                    }
+                  ]}
+                />
+              </Col>
               <Col xs={24} lg={12}>
                 <Tabs 
                   defaultActiveKey="1"
@@ -183,11 +201,6 @@ function App() {
                     }
                   ]}
                 />
-              </Col>
-              <Col xs={24} lg={12}>
-                {analysisData?.smart_analysis && (
-                  <StockAnalysis analysis={analysisData.smart_analysis} />
-                )}
               </Col>
             </Row>
           </div>

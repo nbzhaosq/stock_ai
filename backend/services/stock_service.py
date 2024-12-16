@@ -134,4 +134,42 @@ def check_data_freshness(data, max_age_days=1):
     age = datetime.now() - latest_date
     
     return age.days >= max_age_days
+
+def get_stock_info(market, symbol):
+    """获取股票基本信息"""
+    try:
+        formatted_symbol = format_stock_symbol(market, symbol)
+        ticker = yf.Ticker(formatted_symbol)
+        info = ticker.info
+        
+        # 提取需要的信息
+        stock_info = {
+            'name': info.get('longName') or info.get('shortName') or symbol,
+            'sector': info.get('sector', '未知'),
+            'industry': info.get('industry', '未知'),
+            'market_cap': info.get('marketCap'),
+            'pe_ratio': info.get('trailingPE'),
+            'pb_ratio': info.get('priceToBook'),
+            'dividend_yield': info.get('dividendYield'),
+            'avg_volume': info.get('averageVolume'),
+            'description': info.get('longBusinessSummary'),
+            'website': info.get('website'),
+            'employees': info.get('fullTimeEmployees'),
+            'country': info.get('country'),
+            'currency': info.get('currency')
+        }
+        
+        # 格式化市值
+        if stock_info['market_cap']:
+            if stock_info['market_cap'] >= 1e12:
+                stock_info['market_cap_fmt'] = f"{stock_info['market_cap']/1e12:.2f}万亿"
+            elif stock_info['market_cap'] >= 1e8:
+                stock_info['market_cap_fmt'] = f"{stock_info['market_cap']/1e8:.2f}亿"
+            else:
+                stock_info['market_cap_fmt'] = f"{stock_info['market_cap']/1e4:.2f}万"
+        
+        return stock_info
+    except Exception as e:
+        logger.error(f"获取股票信息失败: {str(e)}")
+        return None
   

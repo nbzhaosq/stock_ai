@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from services.stock_service import get_stock_data, format_stock_symbol
+from services.stock_service import get_stock_data, format_stock_symbol, get_stock_info
 from services.data_analysis import analyze_stock_data
 from services.analysis_service import StockAnalyzer
 from langchain_openai import ChatOpenAI
@@ -109,7 +109,7 @@ def analyze_stock_risk(data, analysis):
                 risk_factors.append("缩量上涨，上涨动能不足")
                 risk_score += 10
             elif trend_strength['trend'] == '下跌':
-                opportunity_factors.append("缩量下跌，下跌动能减弱")
+                opportunity_factors.append("缩量下跌，���跌动能减弱")
                 risk_score -= 5
 
         # 趋势强度分析
@@ -278,12 +278,12 @@ def generate_position_advice(risk_level, trend_strength, volume_analysis, price_
         "较低": 70
     }[risk_level]
     
-    position_advice = f"���议仓位制在{base_position}%以下"
+    position_advice = f"建议仓位控制在{base_position}%以下"
     
     if trend_strength['strength'] > 0.7 and trend_strength['trend'] == '上涨':
         position_advice += "，可以适当增加仓位"
     elif trend_strength['strength'] > 0.7 and trend_strength['trend'] == '下跌':
-        position_advice += "，建议降低仓位"
+        position_advice += "，建议降低���位"
     
     if volume_analysis['volume_trend'] == '放量':
         position_advice += "，注意成交量变化"
@@ -311,19 +311,19 @@ def generate_action_advice(trend_strength, volume_analysis, price_position, risk
         if trend_strength['trend'] == '上涨':
             advices.append("放量上涨，可以适度跟进")
         else:
-            advices.append("放量下跌，建������避风险")
+            advices.append("放量下跌，建议规避风险")
     elif volume_analysis['volume_trend'] == '缩量':
         advices.append("成交量萎缩，建议等待成交量放大")
     
     # 价格位置建议
     if price_position['position'] == 'near_support':
-        advices.append(f"接近支撑位{price_position['level']:.2f}，可以考虑少量试探性买入")
+        advices.append(f"接近支撑位{price_position['level']:.2f}，可以考虑��量试探性买入")
     elif price_position['position'] == 'near_resistance':
         advices.append(f"接近压力位{price_position['level']:.2f}，建议设置止损")
     
     # 风险等级建议
     if risk_level == "较高":
-        advices.append("当前风险较高，建���以观���为主")
+        advices.append("当前风险较高，建议以观望为主")
     
     return advices
 
@@ -624,6 +624,8 @@ def get_stock(market, symbol):
         
         # 获取个股数据
         data = get_stock_data(market, symbol, period, refresh)
+        # 获取股票基本信息
+        stock_info = get_stock_info(market, symbol)
         analysis = analyze_stock_data(data)
         
         # 获取大盘数据
@@ -635,11 +637,7 @@ def get_stock(market, symbol):
         # 添加LLM分析
         llm_analysis = get_llm_analysis(data, analysis)
         logger.info(f'LLM分析结果: {llm_analysis}')
-        smart_analysis['llm_analysis'] = llm_analysis or {
-            "llm_analysis": "AI分析服务暂时不可用，请稍后重试。",
-            "analysis_type": "AI智能分析",
-            "model": "deepseek-chat"
-        }
+        smart_analysis['llm_analysis'] = llm_analysis
         
         # 添加大盘分析
         if market_data:
@@ -652,6 +650,7 @@ def get_stock(market, symbol):
         return jsonify({
             'status': 'success',
             'data': data,
+            'stock_info': stock_info,
             'analysis': analysis
         })
     except Exception as e:

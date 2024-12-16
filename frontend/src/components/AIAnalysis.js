@@ -70,7 +70,9 @@ const AIAnalysis = ({ llmAnalysis }) => {
                   marginBottom: '8px',
                   fontSize: '16px',
                   fontWeight: 500
-                }} {...props} />
+                }} {...props}>
+                  {props.children}
+                </h3>
               ),
               p: ({ node, ...props }) => (
                 <p style={{ 

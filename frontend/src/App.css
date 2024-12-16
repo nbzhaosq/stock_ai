@@ -1006,4 +1006,54 @@ body {
 .markdown-content ul {
   list-style-type: circle;
 }
+
+.stock-data-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.indicator-tags {
+  margin-bottom: 12px;
+}
+
+.stock-info {
+  margin-top: 16px;
+  padding: 0 12px;
+}
+
+.latest-data table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.latest-data td {
+  padding: 8px;
+  font-size: 14px;
+}
+
+.latest-data .up {
+  color: #ef5350;
+}
+
+.latest-data .down {
+  color: #26a69a;
+}
+
+/* 股票信息卡片样式 */
+.stock-info-card {
+  height: 100%;
+}
+
+.stock-info-card .ant-card-body {
+  padding: 16px;
+}
+
+.stock-info-card .ant-descriptions-item {
+  padding-bottom: 8px;
+}
+
+.stock-info-card .ant-typography {
+  margin-bottom: 8px;
+}
   
