@@ -3,4 +3,8 @@ flask-cors
 yfinance
 pandas
 numpy
-scipy 
+scipy
+langchain>=0.1.0
+langchain-community>=0.0.1
+langchain-openai>=0.0.1
+openai>=1.0.0

@@ -1,0 +1,4 @@
+# API密钥配置
+DEEPSEEK_API_KEY = "your-api-key-here"  # 替换为实际的API密钥
+
+# 其他配置项 

@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, theme, message, Row, Col, Card, Button, Drawer } from 'antd';
+import { Layout, theme, message, Row, Col, Card, Button, Drawer, Tabs } from 'antd';
 import { MenuOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import StockSearch from './components/StockSearch';
 import StockChart from './components/StockChart';
 import TradingTools from './components/TradingTools';
 import StockAnalysis from './components/StockAnalysis';
+import TechnicalIndicators from './components/TechnicalIndicators';
+import RiskAnalysis from './components/RiskAnalysis';
+import AIAnalysis from './components/AIAnalysis';
 import './App.css';
 
 const { Header, Content } = Layout;
@@ -56,9 +59,10 @@ function App() {
 
   const handleDataReceived = async (data, searchInfo) => {
     if (data && data.data && data.analysis) {
+      console.log('Received analysis data:', data.analysis);
       setStockData(data);
+      setAnalysisData(data.analysis);
       updateSearchHistory(searchInfo.market, searchInfo.symbol);
-      await handleAnalysis(searchInfo.market, searchInfo.symbol);
     }
   };
 
@@ -154,6 +158,40 @@ function App() {
             </Card>
           </Col>
         </Row>
+
+        {stockData && analysisData && (
+          <div className="analysis-section">
+            <Row gutter={[16, 16]}>
+              <Col xs={24} lg={12}>
+                <Tabs 
+                  defaultActiveKey="1"
+                  items={[
+                    {
+                      key: '1',
+                      label: '技术指标',
+                      children: <TechnicalIndicators analysis={analysisData} />
+                    },
+                    {
+                      key: '2',
+                      label: '风险分析',
+                      children: <RiskAnalysis analysis={analysisData.smart_analysis} />
+                    },
+                    {
+                      key: '3',
+                      label: 'AI分析',
+                      children: <AIAnalysis llmAnalysis={analysisData?.smart_analysis?.llm_analysis} />
+                    }
+                  ]}
+                />
+              </Col>
+              <Col xs={24} lg={12}>
+                {analysisData?.smart_analysis && (
+                  <StockAnalysis analysis={analysisData.smart_analysis} />
+                )}
+              </Col>
+            </Row>
+          </div>
+        )}
       </Content>
 
       <Drawer

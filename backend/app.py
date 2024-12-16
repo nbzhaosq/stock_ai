@@ -3,9 +3,15 @@ from flask_cors import CORS
 from services.stock_service import get_stock_data, format_stock_symbol
 from services.data_analysis import analyze_stock_data
 from services.analysis_service import StockAnalyzer
+from langchain_openai import ChatOpenAI
+from langchain.prompts import ChatPromptTemplate
+from langchain.schema.runnable import RunnablePassthrough
 import logging
 import asyncio
 import numpy as np
+import os
+from config import DEEPSEEK_API_KEY  # 导入配置
+import json
 
 # 配置日志
 logging.basicConfig(
@@ -20,6 +26,9 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 CORS(app)
+
+# 使用配置文件中的API密钥
+os.environ["DEEPSEEK_API_KEY"] = DEEPSEEK_API_KEY
 
 def analyze_stock_risk(data, analysis):
     """分析股票风险和给出建议"""
@@ -77,7 +86,7 @@ def analyze_stock_risk(data, analysis):
             risk_factors.append(f"波动率较高({volatility * 100:.2f}%)，注意控制仓位")
             risk_score += 15
         elif volatility < 0.01:
-            opportunity_factors.append(f"波动率较低({volatility * 100:.2f}%)，可能存在突破机会")
+            opportunity_factors.append(f"波动率较低({volatility * 100:.2f}%)，可能存在��破机会")
         
         # 均线分析
         if latest_price < latest_ma5 < latest_ma20:
@@ -127,7 +136,7 @@ def analyze_stock_risk(data, analysis):
         
         # 如果没有风险因素，添加默认提示
         if not risk_factors and not opportunity_factors:
-            risk_factors.append("当���未发现明显风险信号")
+            risk_factors.append("当前未发现明显风险信号")
             risk_level = "较低"
         
         # 趋势判断
@@ -269,7 +278,7 @@ def generate_position_advice(risk_level, trend_strength, volume_analysis, price_
         "较低": 70
     }[risk_level]
     
-    position_advice = f"建议仓位控制在{base_position}%以下"
+    position_advice = f"���议仓位制在{base_position}%以下"
     
     if trend_strength['strength'] > 0.7 and trend_strength['trend'] == '上涨':
         position_advice += "，可以适当增加仓位"
@@ -302,7 +311,7 @@ def generate_action_advice(trend_strength, volume_analysis, price_position, risk
         if trend_strength['trend'] == '上涨':
             advices.append("放量上涨，可以适度跟进")
         else:
-            advices.append("放量下跌，建议暂避风险")
+            advices.append("放量下跌，建������避风险")
     elif volume_analysis['volume_trend'] == '缩量':
         advices.append("成交量萎缩，建议等待成交量放大")
     
@@ -314,7 +323,7 @@ def generate_action_advice(trend_strength, volume_analysis, price_position, risk
     
     # 风险等级建议
     if risk_level == "较高":
-        advices.append("当前风险较高，建议以观望为主")
+        advices.append("当前风险较高，建���以观���为主")
     
     return advices
 
@@ -336,7 +345,7 @@ def get_market_index_data(market):
         # 获取指数数据
         if market == 'CN':
             # 根据股票代码判断使用哪个指数
-            index_data = get_stock_data('CN', index_symbol['SH'])  # 直接使用带后缀的代码
+            index_data = get_stock_data('CN', index_symbol['SH'])  # 直接使用带后缀的代���
         else:
             index_data = get_stock_data(market, index_symbol)
             
@@ -357,7 +366,7 @@ def analyze_market_trend(index_data):
         periods = {
             '日': 1,
             '周': 5,
-            '月': 20,
+            '��': 20,
             '季': 60
         }
         
@@ -413,7 +422,7 @@ def analyze_market_sentiment(index_data):
         sentiment_score = 0
         sentiment_factors = []
         
-        # 根据上涨天数评估
+        # ��据上涨天数评估
         if up_days >= 15:
             sentiment_score += 30
             sentiment_factors.append("市场持续上涨，情绪偏乐观")
@@ -435,7 +444,7 @@ def analyze_market_sentiment(index_data):
             sentiment_factors.append("市场波动剧烈，风险偏好降低")
         elif volatility < 0.1:  # 10%的年化波动率
             sentiment_score += 10
-            sentiment_factors.append("市场波动平稳，风险偏好适中")
+            sentiment_factors.append("市场波动平稳，风险偏好适")
         
         # 确定情绪状态
         if sentiment_score >= 30:
@@ -496,7 +505,7 @@ def analyze_stock_with_market(stock_data, market_data):
             'conclusions': conclusions
         }
     except Exception as e:
-        logger.error(f"结合大盘分析失败: {str(e)}")
+        logger.error(f"结合大盘分析���败: {str(e)}")
         return None
 
 def calculate_relative_strength(stock_data, market_data):
@@ -512,6 +521,99 @@ def calculate_relative_strength(stock_data, market_data):
     except Exception:
         return 1.0
 
+def get_llm_analysis(stock_data, technical_analysis):
+    """使用LangChain和Deepseek模型分析股票趋势"""
+    try:
+        # 初始化ChatOpenAI（使用Deepseek模型）
+        llm = ChatOpenAI(
+            model="deepseek-chat",
+            openai_api_key=DEEPSEEK_API_KEY,
+            openai_api_base="https://api.deepseek.com/v1",
+            temperature=0.7
+        )
+        
+        # 创建分析提示模板
+        prompt_template = ChatPromptTemplate.from_template(
+            """
+            作为一个专业的股票分析师，请基于以下数据分析该股票的走势：
+            
+            最近的股票数据:
+            {stock_data}
+            
+            技术指标数据:
+            {technical_indicators}
+            
+            请提供以下分析：
+            1. 总体趋势判断
+            2. 主要支撑和阻力位
+            3. 短期投资建议
+            4. 需要关注的风险点
+            
+            请用专业的角度进行分析，并给出具体的数据支持。
+            """
+        )
+        
+        # 创建分析链
+        chain = prompt_template | llm
+        
+        # 准备输入数据
+        recent_data = stock_data[-5:]  # 最近5天数据
+        technical_indicators = {
+            'RSI': technical_analysis.get('rsi', [])[-1] if technical_analysis.get('rsi') else None,
+            'MA5': technical_analysis['moving_average']['MA5'][-1] if technical_analysis.get('moving_average') else None,
+            'MA20': technical_analysis['moving_average']['MA20'][-1] if technical_analysis.get('moving_average') else None,
+            'volatility': technical_analysis.get('volatility'),
+        }
+        
+        # 格式化数据为更易读的格式
+        formatted_data = []
+        for day in recent_data:
+            formatted_data.append({
+                '日期': day.get('date', ''),
+                '开盘': round(day.get('open', 0), 2),
+                '最高': round(day.get('high', 0), 2),
+                '最低': round(day.get('low', 0), 2),
+                '��盘': round(day.get('close', 0), 2),
+                '成交量': day.get('volume', 0)
+            })
+
+        formatted_indicators = {
+            'RSI指标': round(technical_indicators['RSI'], 2) if technical_indicators['RSI'] else None,
+            '5日均线': round(technical_indicators['MA5'], 2) if technical_indicators['MA5'] else None,
+            '20日均线': round(technical_indicators['MA20'], 2) if technical_indicators['MA20'] else None,
+            '波动率': f"{round(technical_indicators['volatility'] * 100, 2)}%" if technical_indicators['volatility'] else None
+        }
+        
+        # 执行分析
+        response = chain.invoke({
+            "stock_data": json.dumps(formatted_data, indent=2, ensure_ascii=False),
+            "technical_indicators": json.dumps(formatted_indicators, indent=2, ensure_ascii=False)
+        }).content
+        
+        logger.info(f"AI分析响应: {response}")
+        
+        # 如果响应为空，返回默认分析
+        if not response:
+            return {
+                "llm_analysis": "AI分析服务暂时不可用，请稍后重试。",
+                "analysis_type": "AI智能分析",
+                "model": "deepseek-chat"
+            }
+        
+        return {
+            "llm_analysis": response,
+            "analysis_type": "AI智能分析",
+            "model": "deepseek-chat"
+        }
+        
+    except Exception as e:
+        logger.error(f"LLM分析失败: {str(e)}", exc_info=True)
+        return {
+            "llm_analysis": f"AI分析生成失败: {str(e)}",
+            "analysis_type": "AI智能分析",
+            "model": "deepseek-chat"
+        }
+
 # 修改主要的分析函数
 @app.route('/api/stock/<market>/<symbol>', methods=['GET'])
 def get_stock(market, symbol):
@@ -520,7 +622,7 @@ def get_stock(market, symbol):
         period = request.args.get('period', '1y')
         refresh = request.args.get('refresh', '').lower() == 'true'
         
-        # 获取个股数据（股票代码格式化已经在 get_stock_data 中处理）
+        # 获取个股数据
         data = get_stock_data(market, symbol, period, refresh)
         analysis = analyze_stock_data(data)
         
@@ -529,6 +631,15 @@ def get_stock(market, symbol):
         
         # 添加智能分析
         smart_analysis = analyze_stock_risk(data, analysis)
+        
+        # 添加LLM分析
+        llm_analysis = get_llm_analysis(data, analysis)
+        logger.info(f'LLM分析结果: {llm_analysis}')
+        smart_analysis['llm_analysis'] = llm_analysis or {
+            "llm_analysis": "AI分析服务暂时不可用，请稍后重试。",
+            "analysis_type": "AI智能分析",
+            "model": "deepseek-chat"
+        }
         
         # 添加大盘分析
         if market_data:

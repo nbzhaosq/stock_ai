@@ -313,8 +313,24 @@ body {
   flex-direction: column;
 }
 
+/* 分析区域样式 */
 .analysis-section {
   margin-top: 16px;
+  width: 100%;
+}
+
+.analysis-section .ant-tabs {
+  height: 100%;
+}
+
+.analysis-section .ant-card {
+  height: 100%;
+  margin-bottom: 0;
+}
+
+.analysis-section .ant-card-body {
+  height: calc(100% - 57px);  /* 减去卡片头部高度 */
+  overflow-y: auto;
 }
 
 /* 图表相关样式 */
@@ -536,7 +552,7 @@ body {
 
   .app-content {
     padding-top: 96px;  /* 调整移动端内容区域上边距 */
-    height: calc(100vh - 96px - 160px);  /* 调整移动端高度 */
+    height: calc(100vh - 96px - 160px);  /* 调整移动端度 */
   }
 
   .app-sider {
@@ -914,5 +930,80 @@ body {
   padding: 2px 8px;
   border-radius: 4px;
   font-size: 12px;
+}
+
+/* AI分析样式 */
+.analysis-card {
+  margin-bottom: 20px;
+}
+
+.analysis-content {
+  padding: 10px 0;
+}
+
+.analysis-content .ant-typography {
+  margin-bottom: 12px;
+}
+
+.analysis-content .ant-list-item {
+  padding: 12px 0;
+}
+
+.analysis-content .ant-divider {
+  margin: 12px 0;
+}
+
+/* 响应式调整 */
+@media (max-width: 992px) {
+  .analysis-section .ant-col {
+    margin-bottom: 16px;
+  }
+  
+  .analysis-section .ant-col:last-child {
+    margin-bottom: 0;
+  }
+}
+
+/* AI分析样式 */
+.analysis-card {
+  margin-bottom: 20px;
+}
+
+.analysis-content {
+  padding: 10px 0;
+}
+
+.markdown-content {
+  padding: 0 16px;
+}
+
+.markdown-content h3 {
+  position: relative;
+  padding-left: 12px;
+}
+
+.markdown-content h3::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 16px;
+  background-color: #1890ff;
+  border-radius: 2px;
+}
+
+.markdown-content p {
+  text-align: justify;
+}
+
+.markdown-content strong {
+  color: #1890ff;
+  font-weight: 500;
+}
+
+.markdown-content ul {
+  list-style-type: circle;
 }
   

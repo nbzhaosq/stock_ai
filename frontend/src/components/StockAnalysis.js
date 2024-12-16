@@ -1,118 +1,72 @@
 import React from 'react';
-import { Card, Descriptions, Tag, Space, Typography } from 'antd';
-import { ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
+import { Card, Typography, Space, Tag } from 'antd';
 
-const { Title, Paragraph } = Typography;
+const { Title, Text, Paragraph } = Typography;
 
 const StockAnalysis = ({ analysis }) => {
   if (!analysis) return null;
 
-  const getTrendColor = (direction) => {
-    return direction === 'up' ? '#f56c6c' : '#67c23a';
+  const getTrendColor = (trend) => {
+    if (!trend) return 'default';
+    return trend === '上涨' ? 'red' : trend === '下跌' ? 'green' : 'blue';
   };
 
   const getRiskColor = (level) => {
-    const colors = {
-      high: '#f56c6c',
-      medium: '#e6a23c',
-      low: '#67c23a'
-    };
-    return colors[level] || '#909399';
+    switch (level) {
+      case '较高':
+        return 'red';
+      case '较低':
+        return 'green';
+      default:
+        return 'orange';
+    }
   };
 
   return (
-    <div className="stock-analysis">
-      <Card title="智能分析报告" bordered={false}>
-        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-          {/* 趋势分析 */}
-          <Card type="inner" title="趋势分析">
-            <Descriptions column={2}>
-              <Descriptions.Item label="趋势方向">
-                <Space>
-                  {analysis.trend.direction === 'up' ? (
-                    <ArrowUpOutlined style={{ color: '#f56c6c' }} />
-                  ) : (
-                    <ArrowDownOutlined style={{ color: '#67c23a' }} />
-                  )}
-                  <span style={{ color: getTrendColor(analysis.trend.direction) }}>
-                    {analysis.trend.direction === 'up' ? '上升' : '下降'}
-                  </span>
-                </Space>
-              </Descriptions.Item>
-              <Descriptions.Item label="趋势强度">
-                <Tag color={analysis.trend.strength > 0.7 ? 'red' : 'blue'}>
-                  {(analysis.trend.strength * 100).toFixed(1)}%
+    <Card className="analysis-card" title="智能分析">
+      <Space direction="vertical" size="large" style={{ width: '100%' }}>
+        {/* 趋势分析 */}
+        <div>
+          <Title level={5}>趋势分析</Title>
+          {analysis.price_trend?.map((item, index) => (
+            <div key={index} style={{ marginBottom: 8 }}>
+              <Space>
+                <Text>{item.name}：</Text>
+                <Tag color={getTrendColor(item.trend)}>
+                  {item.change > 0 ? '+' : ''}{item.change}%
                 </Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="置信度">
-                <Tag color={
-                  analysis.trend.confidence === 'high' ? 'green' :
-                  analysis.trend.confidence === 'medium' ? 'orange' : 'red'
-                }>
-                  {analysis.trend.confidence}
-                </Tag>
-              </Descriptions.Item>
-            </Descriptions>
-          </Card>
+              </Space>
+            </div>
+          ))}
+        </div>
 
-          {/* 波动性分析 */}
-          <Card type="inner" title="波动性分析">
-            <Descriptions column={2}>
-              <Descriptions.Item label="风险等级">
-                <Tag color={getRiskColor(analysis.volatility.risk_level)}>
-                  {analysis.volatility.risk_level}
-                </Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="年化波动率">
-                {(analysis.volatility.annual_volatility * 100).toFixed(2)}%
-              </Descriptions.Item>
-              <Descriptions.Item label="价格区间">
-                {analysis.volatility.price_range.min.toFixed(2)} - {analysis.volatility.price_range.max.toFixed(2)}
-              </Descriptions.Item>
-            </Descriptions>
-          </Card>
+        {/* 风险评估 */}
+        <div>
+          <Title level={5}>风险评估</Title>
+          <Space>
+            <Text>风险等级：</Text>
+            <Tag color={getRiskColor(analysis.risk_level)}>
+              {analysis.risk_level}
+            </Tag>
+          </Space>
+          <Paragraph>
+            {analysis.position_advice}
+          </Paragraph>
+        </div>
 
-          {/* 支撑阻力位 */}
-          <Card type="inner" title="支撑阻力位分析">
-            <Descriptions column={2}>
-              <Descriptions.Item label="支撑位">
-                {analysis.support_resistance.support}
-              </Descriptions.Item>
-              <Descriptions.Item label="阻力位">
-                {analysis.support_resistance.resistance}
-              </Descriptions.Item>
-              <Descriptions.Item label="当前位置">
-                <Tag color="blue">{analysis.support_resistance.position}</Tag>
-              </Descriptions.Item>
-            </Descriptions>
-          </Card>
-
-          {/* 技术指标 */}
-          <Card type="inner" title="技术指标分析">
-            <Descriptions column={2}>
-              <Descriptions.Item label="RSI">
-                <Tag color={
-                  analysis.technical_indicators.rsi.condition === 'overbought' ? 'red' :
-                  analysis.technical_indicators.rsi.condition === 'oversold' ? 'green' : 'blue'
-                }>
-                  {analysis.technical_indicators.rsi.value}
-                </Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="MACD趋势">
-                <Tag color={analysis.technical_indicators.macd.trend === 'bullish' ? 'red' : 'green'}>
-                  {analysis.technical_indicators.macd.trend}
-                </Tag>
-              </Descriptions.Item>
-            </Descriptions>
-          </Card>
-
-          {/* 分析总结 */}
-          <Card type="inner" title="分析总结">
-            <Paragraph>{analysis.summary}</Paragraph>
-          </Card>
-        </Space>
-      </Card>
-    </div>
+        {/* 市场分析 */}
+        {analysis.market_analysis && (
+          <div>
+            <Title level={5}>市场分析</Title>
+            {analysis.market_analysis.conclusions?.map((conclusion, index) => (
+              <Paragraph key={index}>
+                {conclusion}
+              </Paragraph>
+            ))}
+          </div>
+        )}
+      </Space>
+    </Card>
   );
 };
 

@@ -43,3 +43,6 @@ settings.local.json
 
 *.db
 *.sqlite3
+
+# 配置文件
+backend/config.py
